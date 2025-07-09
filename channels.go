@@ -80,21 +80,22 @@ func (c *CommandClient) ChannelList(ctx context.Context) ([]Channel, error) {
 	return output, err
 }
 
-func (c *CommandClient) ChannelOriginate(ctx context.Context, endpoint string, opts ChannelOpts) (Channel, error) {
+func (c *CommandClient) ChannelOriginate(ctx context.Context, endpoint string, opts ...ChannelOriginateOpts) (Channel, error) {
 	path := "/channels"
 
 	params := url.Values{}
 	params.Set("endpoint", endpoint)
-	params.Set("app", opts.App)
+	
+	if len(opts) > 0 {
+		optParams := opts[0].formatQueryOpts()
+		for key, values := range optParams {
+			for _, value := range values {
+				params.Add(key, value)
+			}
+		}
+	}
+	
 	path = path + "?" + params.Encode()
-
-	// override required fields
-	opts.Endpoint = endpoint
-	/*
-		body, err := json.Marshal(opts)
-		if err != nil {
-			return Channel{}, err
-		}*/
 
 	result, err := c.httpPost(ctx, path, nil)
 	if err != nil {
@@ -105,22 +106,27 @@ func (c *CommandClient) ChannelOriginate(ctx context.Context, endpoint string, o
 	err = json.Unmarshal(result, &output)
 	return output, err
 }
-func (c *CommandClient) ChannelOriginateWithId(ctx context.Context, endpoint string, channelId string, opts ChannelOpts) (Channel, error) {
+func (c *CommandClient) ChannelOriginateWithId(ctx context.Context, endpoint string, channelId string, opts ...ChannelOriginateWithIdOpts) (Channel, error) {
 	path, err := url.JoinPath("/channels", channelId)
 	if err != nil {
 		return Channel{}, err
 	}
 
-	// override required fields
-	opts.ChannelId = "" // empty because it's a path param
-	opts.Endpoint = endpoint
-
-	body, err := json.Marshal(opts)
-	if err != nil {
-		return Channel{}, err
+	params := url.Values{}
+	params.Set("endpoint", endpoint)
+	
+	if len(opts) > 0 {
+		optParams := opts[0].formatQueryOpts()
+		for key, values := range optParams {
+			for _, value := range values {
+				params.Add(key, value)
+			}
+		}
 	}
+	
+	path = path + "?" + params.Encode()
 
-	result, err := c.httpPost(ctx, path, body)
+	result, err := c.httpPost(ctx, path, nil)
 	if err != nil {
 		return Channel{}, err
 	}
@@ -130,19 +136,25 @@ func (c *CommandClient) ChannelOriginateWithId(ctx context.Context, endpoint str
 	return output, err
 }
 
-func (c *CommandClient) ChannelCreate(ctx context.Context, endpoint string, app string, opts ChannelOpts) (Channel, error) {
+func (c *CommandClient) ChannelCreate(ctx context.Context, endpoint string, app string, opts ...ChannelCreateOpts) (Channel, error) {
 	path := "/channels/create"
 
-	// override required fields
-	opts.Endpoint = endpoint
-	opts.App = app
-
-	body, err := json.Marshal(opts)
-	if err != nil {
-		return Channel{}, err
+	params := url.Values{}
+	params.Set("endpoint", endpoint)
+	params.Set("app", app)
+	
+	if len(opts) > 0 {
+		optParams := opts[0].formatQueryOpts()
+		for key, values := range optParams {
+			for _, value := range values {
+				params.Add(key, value)
+			}
+		}
 	}
+	
+	path = path + "?" + params.Encode()
 
-	result, err := c.httpPost(ctx, path, body)
+	result, err := c.httpPost(ctx, path, nil)
 	if err != nil {
 		return Channel{}, err
 	}
@@ -309,26 +321,128 @@ func (c *CommandClient) ChannelPlayWithId(ctx context.Context, channelId string,
 	return c.channelPlay(ctx, path, media)
 }
 
-type ChannelOpts struct {
+type ChannelOriginateOpts struct {
 	App            string `json:"app,omitempty"`
 	AppArgs        string `json:"appArgs,omitempty"`
 	CallerId       string `json:"callerId,omitempty"`
 	ChannelId      string `json:"channelId,omitempty"`
-	Endpoint       string `json:"endpoint,omitempty"`
 	Formats        string `json:"formats,omitempty"`
 	OtherChannelId string `json:"otherChannelId,omitempty"`
 	Originator     string `json:"originator,omitempty"`
-	Timeout        int    `json:"timeout,omitempty"` // used in originate, not create
-	/*
-		These fields only used when connecting
-		channel to a dialplan context.
-		Use "App" to connect directly into ARI.
-	*/
+	Timeout        int    `json:"timeout,omitempty"`
+	Context        string `json:"context,omitempty"`
+	Extension      string `json:"extension,omitempty"`
+	Label          string `json:"label,omitempty"`
+	Priority       string `json:"priority,omitempty"`
+}
 
-	Context   string `json:"context,omitempty"`
-	Extension string `json:"extension,omitempty"`
-	Label     string `json:"label,omitempty"`
-	Priority  string `json:"priority,omitempty"`
+type ChannelOriginateWithIdOpts struct {
+	App            string `json:"app,omitempty"`
+	AppArgs        string `json:"appArgs,omitempty"`
+	CallerId       string `json:"callerId,omitempty"`
+	Formats        string `json:"formats,omitempty"`
+	OtherChannelId string `json:"otherChannelId,omitempty"`
+	Originator     string `json:"originator,omitempty"`
+	Timeout        int    `json:"timeout,omitempty"`
+	Context        string `json:"context,omitempty"`
+	Extension      string `json:"extension,omitempty"`
+	Label          string `json:"label,omitempty"`
+	Priority       string `json:"priority,omitempty"`
+}
+
+type ChannelCreateOpts struct {
+	AppArgs   string `json:"appArgs,omitempty"`
+	ChannelId string `json:"channelId,omitempty"`
+}
+
+func (opts ChannelOriginateOpts) formatQueryOpts() url.Values {
+	params := url.Values{}
+	if opts.App != "" {
+		params.Set("app", opts.App)
+	}
+	if opts.AppArgs != "" {
+		params.Set("appArgs", opts.AppArgs)
+	}
+	if opts.CallerId != "" {
+		params.Set("callerId", opts.CallerId)
+	}
+	if opts.ChannelId != "" {
+		params.Set("channelId", opts.ChannelId)
+	}
+	if opts.Formats != "" {
+		params.Set("formats", opts.Formats)
+	}
+	if opts.OtherChannelId != "" {
+		params.Set("otherChannelId", opts.OtherChannelId)
+	}
+	if opts.Originator != "" {
+		params.Set("originator", opts.Originator)
+	}
+	if opts.Timeout != 0 {
+		params.Set("timeout", strconv.Itoa(opts.Timeout))
+	}
+	if opts.Context != "" {
+		params.Set("context", opts.Context)
+	}
+	if opts.Extension != "" {
+		params.Set("extension", opts.Extension)
+	}
+	if opts.Label != "" {
+		params.Set("label", opts.Label)
+	}
+	if opts.Priority != "" {
+		params.Set("priority", opts.Priority)
+	}
+	return params
+}
+
+func (opts ChannelOriginateWithIdOpts) formatQueryOpts() url.Values {
+	params := url.Values{}
+	if opts.App != "" {
+		params.Set("app", opts.App)
+	}
+	if opts.AppArgs != "" {
+		params.Set("appArgs", opts.AppArgs)
+	}
+	if opts.CallerId != "" {
+		params.Set("callerId", opts.CallerId)
+	}
+	if opts.Formats != "" {
+		params.Set("formats", opts.Formats)
+	}
+	if opts.OtherChannelId != "" {
+		params.Set("otherChannelId", opts.OtherChannelId)
+	}
+	if opts.Originator != "" {
+		params.Set("originator", opts.Originator)
+	}
+	if opts.Timeout != 0 {
+		params.Set("timeout", strconv.Itoa(opts.Timeout))
+	}
+	if opts.Context != "" {
+		params.Set("context", opts.Context)
+	}
+	if opts.Extension != "" {
+		params.Set("extension", opts.Extension)
+	}
+	if opts.Label != "" {
+		params.Set("label", opts.Label)
+	}
+	if opts.Priority != "" {
+		params.Set("priority", opts.Priority)
+	}
+	return params
+}
+
+func (opts ChannelCreateOpts) formatQueryOpts() url.Values {
+	params := url.Values{}
+	if opts.AppArgs != "" {
+		params.Set("appArgs", opts.AppArgs)
+	}
+	if opts.ChannelId != "" {
+		params.Set("channelId", opts.ChannelId)
+	}
+	return params
 }
 
 type ChannelContinueOpts struct {
