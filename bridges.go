@@ -8,18 +8,24 @@ import (
 	"strconv"
 )
 
-func (c *CommandClient) BridgesList(ctx context.Context) ([]Bridge, error) {
+func (c *CommandClient) BridgeList(ctx context.Context) ([]Bridge, error) {
 	var output []Bridge
 	path := "/bridges"
 
 	result, err := c.httpGet(ctx, path)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	return output, nil
@@ -46,7 +52,10 @@ func (c *CommandClient) BridgeCreate(ctx context.Context, bridgeId string, bridg
 
 	var output Bridge
 	err = json.Unmarshal(result, &output)
-	return output, err
+	if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 
 }
 func (c *CommandClient) BridgeCreateWithId(ctx context.Context, bridgeId string, bridgeType string, name string) error {
@@ -58,7 +67,10 @@ func (c *CommandClient) BridgeCreateWithId(ctx context.Context, bridgeId string,
 
 	path, err := url.JoinPath("bridges", bridgeId)
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 	}
 
 	params := url.Values{}
@@ -75,7 +87,10 @@ func (c *CommandClient) BridgeCreateWithId(ctx context.Context, bridgeId string,
 
 	_, err = c.httpPost(ctx, path, nil)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 
 }
 
@@ -83,7 +98,10 @@ func (c *CommandClient) BridgeCreateUpdate(ctx context.Context, bridgeId string,
 	var output Bridge
 	path, err := url.JoinPath("/bridges", bridgeId)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	if opts != nil {
@@ -94,12 +112,18 @@ func (c *CommandClient) BridgeCreateUpdate(ctx context.Context, bridgeId string,
 
 	result, err := c.httpPost(ctx, path, nil)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	return output, nil
@@ -109,37 +133,55 @@ func (c *CommandClient) BridgeGet(ctx context.Context, bridgeId string) (Bridge,
 	var output Bridge
 	path, err := url.JoinPath("/bridges", bridgeId)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	result, err := c.httpGet(ctx, path)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	return output, nil
 
 }
-func (c *CommandClient) BridgesShutdown(ctx context.Context, bridgeId string) error {
+func (c *CommandClient) BridgeShutdown(ctx context.Context, bridgeId string) error {
 	path, err := url.JoinPath("/bridges", bridgeId)
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 	}
 
 	_, err = c.httpDelete(ctx, path)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 
 }
 func (c *CommandClient) BridgeAddChannel(ctx context.Context, bridgeId string, channel string, opts ...BridgeChannelOpts) error {
 	path, err := url.JoinPath("/bridges", bridgeId, "addChannel")
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 	}
 
 	qparams := url.Values{}
@@ -152,13 +194,19 @@ func (c *CommandClient) BridgeAddChannel(ctx context.Context, bridgeId string, c
 
 	_, err = c.httpPost(ctx, path, nil)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 
 }
-func (c *CommandClient) BridgesRemoveChannel(ctx context.Context, bridgeId string, channel string) error {
+func (c *CommandClient) BridgeRemoveChannel(ctx context.Context, bridgeId string, channel string) error {
 	path, err := url.JoinPath("/bridges", bridgeId, "removeChannel")
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 	}
 
 	qparams := url.Values{}
@@ -166,35 +214,53 @@ func (c *CommandClient) BridgesRemoveChannel(ctx context.Context, bridgeId strin
 	path = path + "?" + qparams.Encode()
 
 	_, err = c.httpPost(ctx, path, nil)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 
 }
 
-func (c *CommandClient) BridgesSetVideoSource(ctx context.Context, bridgeId string, channelId string) error {
+func (c *CommandClient) BridgeSetVideoSource(ctx context.Context, bridgeId string, channelId string) error {
 	path, err := url.JoinPath("/bridges", bridgeId, "videoSource", channelId)
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 	}
 
 	_, err = c.httpPost(ctx, path, nil)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 }
 
 func (c *CommandClient) BridgeRemoveVideoSrouce(ctx context.Context, bridgeId string) error {
 	path, err := url.JoinPath("/bridges", bridgeId, "videoSource")
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 	}
 
 	_, err = c.httpDelete(ctx, path)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 
 }
 
 func (c *CommandClient) BridgePlayMoh(ctx context.Context, bridgeId string, mohClass ...string) error {
 	path, err := url.JoinPath("/bridges", bridgeId, "moh")
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 	}
 
 	if mohClass != nil {
@@ -204,18 +270,27 @@ func (c *CommandClient) BridgePlayMoh(ctx context.Context, bridgeId string, mohC
 	}
 
 	_, err = c.httpPost(ctx, path, nil)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 
 }
 
 func (c *CommandClient) BridgeStopMoh(ctx context.Context, bridgeId string) error {
 	path, err := url.JoinPath("/bridges", bridgeId, "moh")
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 	}
 
 	_, err = c.httpDelete(ctx, path)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform bridge operation: %w", err)
+	}
+	return nil
 
 }
 
@@ -224,7 +299,10 @@ func (c *CommandClient) BridgePlay(ctx context.Context, bridgeId string, media s
 
 	path, err := url.JoinPath("/bridges", bridgeId, "play")
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	qparams := url.Values{}
@@ -236,12 +314,18 @@ func (c *CommandClient) BridgePlay(ctx context.Context, bridgeId string, media s
 
 	result, err := c.httpPost(ctx, path, nil)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 	return output, nil
 
@@ -252,7 +336,10 @@ func (c *CommandClient) BridgePlayWithId(ctx context.Context, bridgeId string, m
 
 	path, err := url.JoinPath("/bridges", bridgeId, "play", playbackId)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	qparams := url.Values{}
@@ -266,11 +353,17 @@ func (c *CommandClient) BridgePlayWithId(ctx context.Context, bridgeId string, m
 
 	result, err := c.httpPost(ctx, path, nil)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	err = json.Unmarshal(result, &output)
-	return output, err
+	if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 
 }
 
@@ -279,7 +372,10 @@ func (c *CommandClient) BridgeRecord(ctx context.Context, bridgeId string, name 
 
 	path, err := url.JoinPath("/bridges", bridgeId, "record")
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	qparams := url.Values{}
@@ -292,11 +388,17 @@ func (c *CommandClient) BridgeRecord(ctx context.Context, bridgeId string, name 
 
 	result, err := c.httpPost(ctx, path, nil)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 	}
 
 	err = json.Unmarshal(result, &output)
-	return output, err
+	if err != nil {
+		return output, fmt.Errorf("failed to unmarshal bridge response: %w", err)
+	}
+	return output, nil
 
 }
 
@@ -327,11 +429,10 @@ func (opts BridgeCreateOpts) formatQueryOpts(qparams *url.Values) {
 }
 
 type BridgeChannelOpts struct {
-	// *bool used to allow for omitting optional fields
 	Role                        string `json:"role,omitempty"`
-	AbsorbDTMF                  *bool  `json:"absorbDTMF,omitempty"`
-	Mute                        *bool  `json:"mute,omitempty"`
-	InhibitConnectedLineUpdates *bool  `json:"inhibitConnectedLineUpdates,omitempty"`
+	AbsorbDTMF                  bool   `json:"absorbDTMF,omitempty"`
+	Mute                        bool   `json:"mute,omitempty"`
+	InhibitConnectedLineUpdates bool   `json:"inhibitConnectedLineUpdates,omitempty"`
 }
 
 func (opts BridgeChannelOpts) formatQueryOpts(qparams *url.Values) {
@@ -340,17 +441,9 @@ func (opts BridgeChannelOpts) formatQueryOpts(qparams *url.Values) {
 	if opts.Role != "" {
 		params["role"] = opts.Role
 	}
-	if opts.AbsorbDTMF != nil {
-		params["absorbDTMF"] = strconv.FormatBool(*opts.AbsorbDTMF)
-	}
-	if opts.Mute != nil {
-		params["mute"] = strconv.FormatBool(*opts.AbsorbDTMF)
-
-	}
-	if opts.InhibitConnectedLineUpdates != nil {
-		params["inhibitConnectedLineUpdates"] = strconv.FormatBool(*opts.InhibitConnectedLineUpdates)
-
-	}
+	params["absorbDTMF"] = strconv.FormatBool(opts.AbsorbDTMF)
+	params["mute"] = strconv.FormatBool(opts.Mute)
+	params["inhibitConnectedLineUpdates"] = strconv.FormatBool(opts.InhibitConnectedLineUpdates)
 	for key, val := range params {
 		qparams.Add(key, val)
 	}
@@ -388,7 +481,7 @@ type BridgeRecordOpts struct {
 	MaxDurationSeconds int
 	MaxSilenceSeconds  int
 	IfExists           string
-	Beep               *bool
+	Beep               bool
 	TerminateOn        string
 }
 
@@ -404,9 +497,7 @@ func (opts BridgeRecordOpts) formatQueryOpts(qparams *url.Values) {
 	if opts.IfExists != "" {
 		params["ifExists"] = opts.IfExists
 	}
-	if opts.Beep != nil {
-		params["beep"] = strconv.FormatBool(*opts.Beep)
-	}
+	params["beep"] = strconv.FormatBool(opts.Beep)
 	if opts.TerminateOn != "" {
 		params["terminateOn"] = opts.TerminateOn
 	}

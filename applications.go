@@ -3,6 +3,7 @@ package ari
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"strings"
 )
@@ -16,14 +17,20 @@ func (c *CommandClient) ApplicationsList(ctx context.Context) ([]Application, er
 	// process the request
 	result, err := c.httpGet(ctx, path)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal application response: %w", err)
+	}
+	return output, nil
 
 	}
 
 	// unmarshall response body into struct
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal application response: %w", err)
+	}
+	return output, nil
 	}
 
 	return output, nil
@@ -37,12 +44,18 @@ func (c *CommandClient) ApplicationsGet(ctx context.Context, applicationName str
 
 	result, err := c.httpGet(ctx, path)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal application response: %w", err)
+	}
+	return output, nil
 	}
 
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal application response: %w", err)
+	}
+	return output, nil
 	}
 
 	return output, nil
@@ -70,7 +83,10 @@ func (c *CommandClient) ApplicationsSubscribe(ctx context.Context, appName strin
 	var output Application
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal application response: %w", err)
+	}
+	return output, nil
 	}
 
 	return output, nil
@@ -98,7 +114,10 @@ func (c *CommandClient) ApplicationsUnsubscribe(ctx context.Context, appName str
 	var output Application
 	err = json.Unmarshal(res, &output)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal application response: %w", err)
+	}
+	return output, nil
 	}
 
 	return output, nil
@@ -128,7 +147,10 @@ func (c *CommandClient) ApplicationsEventFilter(ctx context.Context, appName str
 	var output Application
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		if err != nil {
+		return output, fmt.Errorf("failed to unmarshal application response: %w", err)
+	}
+	return output, nil
 	}
 
 	return output, nil

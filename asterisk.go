@@ -3,6 +3,7 @@ package ari
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"slices"
 )
@@ -26,12 +27,12 @@ func (c *CommandClient) AsteriskInfo(ctx context.Context, only ...string) (Aster
 
 	result, err := c.httpGet(ctx, path)
 	if err != nil {
-		return output, err
+		return output, fmt.Errorf("failed to get asterisk info: %w", err)
 	}
 
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		return output, fmt.Errorf("failed to unmarshal asterisk info: %w", err)
 	}
 
 	return output, nil
@@ -47,14 +48,14 @@ func (c *CommandClient) AsteriskPing(ctx context.Context) (AsteriskPing, error) 
 	// process the request
 	result, err := c.httpGet(ctx, path)
 	if err != nil {
-		return output, err
+		return output, fmt.Errorf("failed to ping asterisk: %w", err)
 
 	}
 
 	// unmarshall response body into struct
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		return output, fmt.Errorf("failed to unmarshal asterisk ping: %w", err)
 	}
 
 	return output, nil

@@ -3,6 +3,7 @@ package ari
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 )
 
@@ -11,19 +12,19 @@ import (
 func (c *CommandClient) ConfigObjectGet(ctx context.Context, configClass string, objectType string, id string) (ConfigTuple, error) {
 	path, err := url.JoinPath("/asterisk/config/dynamic", configClass, objectType, id)
 	if err != nil {
-		return ConfigTuple{}, err
+		return ConfigTuple{}, fmt.Errorf("failed to build config object path: %w", err)
 	}
 
 	var output ConfigTuple
 
 	result, err := c.httpGet(ctx, path)
 	if err != nil {
-		return output, err
+		return output, fmt.Errorf("failed to get config object: %w", err)
 	}
 
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		return output, fmt.Errorf("failed to unmarshal config object: %w", err)
 	}
 
 	return output, nil
@@ -32,7 +33,7 @@ func (c *CommandClient) ConfigObjectGet(ctx context.Context, configClass string,
 func (c *CommandClient) ConfigObjectCreate(ctx context.Context, configClass string, objectType string, id string, fields ...[]ConfigTuple) (ConfigTuple, error) {
 	path, err := url.JoinPath("/asterisk/config/dynamic", configClass, objectType, id)
 	if err != nil {
-		return ConfigTuple{}, err
+		return ConfigTuple{}, fmt.Errorf("failed to build config object path: %w", err)
 	}
 
 	// body
@@ -40,7 +41,7 @@ func (c *CommandClient) ConfigObjectCreate(ctx context.Context, configClass stri
 	if fields != nil {
 		body, err = json.Marshal(&fields[0])
 		if err != nil {
-			return ConfigTuple{}, err
+			return ConfigTuple{}, fmt.Errorf("failed to marshal config object fields: %w", err)
 		}
 	}
 
@@ -48,12 +49,12 @@ func (c *CommandClient) ConfigObjectCreate(ctx context.Context, configClass stri
 
 	result, err := c.httpPut(ctx, path, body)
 	if err != nil {
-		return output, err
+		return output, fmt.Errorf("failed to create config object: %w", err)
 	}
 
 	err = json.Unmarshal(result, &output)
 	if err != nil {
-		return output, err
+		return output, fmt.Errorf("failed to unmarshal config object: %w", err)
 	}
 
 	return output, nil
@@ -62,10 +63,13 @@ func (c *CommandClient) ConfigObjectCreate(ctx context.Context, configClass stri
 func (c *CommandClient) ConfigObjectDelete(ctx context.Context, configClass string, objectType string, id string) error {
 	path, err := url.JoinPath("/asterisk/config/dynamic", configClass, objectType, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build config object path: %w", err)
 	}
 
 	_, err = c.httpDelete(ctx, path)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to delete config object: %w", err)
+	}
+	return nil
 
 }

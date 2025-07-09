@@ -14,12 +14,15 @@ import (
 func (c *CommandClient) ChannelAnswer(ctx context.Context, channelId string) error {
 	path, err := url.JoinPath("/channels", channelId, "answer")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build answer path: %w", err)
 	}
 
 	_, err = c.httpPost(ctx, path, nil)
+	if err != nil {
+		return fmt.Errorf("failed to answer channel: %w", err)
+	}
 
-	return err
+	return nil
 
 }
 
@@ -28,7 +31,7 @@ func (c *CommandClient) ChannelMute(ctx context.Context, channelId string, direc
 
 	path, err := url.JoinPath("channels", channelId, "mute")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build mute path: %w", err)
 	}
 
 	accepted := []string{"both", "in", "out"}
@@ -41,7 +44,10 @@ func (c *CommandClient) ChannelMute(ctx context.Context, channelId string, direc
 	path = path + "?" + params.Encode()
 
 	_, err = c.httpPost(ctx, path, nil)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to mute channel: %w", err)
+	}
+	return nil
 }
 
 func (c *CommandClient) ChannelUnmute(ctx context.Context, channelId string, direction string) error {
@@ -49,7 +55,10 @@ func (c *CommandClient) ChannelUnmute(ctx context.Context, channelId string, dir
 
 	path, err := url.JoinPath("channels", channelId, "mute")
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform channel operation: %w", err)
+	}
+	return nil
 	}
 
 	// request will fail without direction query
@@ -64,7 +73,10 @@ func (c *CommandClient) ChannelUnmute(ctx context.Context, channelId string, dir
 	path = path + "?" + params.Encode()
 
 	_, err = c.httpDelete(ctx, path)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform channel operation: %w", err)
+	}
+	return nil
 }
 
 func (c *CommandClient) ChannelList(ctx context.Context) ([]Channel, error) {
@@ -72,12 +84,15 @@ func (c *CommandClient) ChannelList(ctx context.Context) ([]Channel, error) {
 
 	result, err := c.httpGet(ctx, path)
 	if err != nil {
-		return []Channel{}, err
+		return []Channel{}, fmt.Errorf("failed to get channel list: %w", err)
 	}
 
 	var output []Channel
 	err = json.Unmarshal(result, &output)
-	return output, err
+	if err != nil {
+		return []Channel{}, fmt.Errorf("failed to unmarshal channel list: %w", err)
+	}
+	return output, nil
 }
 
 func (c *CommandClient) ChannelOriginate(ctx context.Context, endpoint string, opts ...ChannelOriginateOpts) (Channel, error) {
@@ -104,12 +119,15 @@ func (c *CommandClient) ChannelOriginate(ctx context.Context, endpoint string, o
 
 	var output Channel
 	err = json.Unmarshal(result, &output)
-	return output, err
+	if err != nil {
+		return output, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+	return output, nil
 }
 func (c *CommandClient) ChannelOriginateWithId(ctx context.Context, endpoint string, channelId string, opts ...ChannelOriginateWithIdOpts) (Channel, error) {
 	path, err := url.JoinPath("/channels", channelId)
 	if err != nil {
-		return Channel{}, err
+		return Channel{}, fmt.Errorf("failed to build originate with id path: %w", err)
 	}
 
 	params := url.Values{}
@@ -133,7 +151,10 @@ func (c *CommandClient) ChannelOriginateWithId(ctx context.Context, endpoint str
 
 	var output Channel
 	err = json.Unmarshal(result, &output)
-	return output, err
+	if err != nil {
+		return output, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+	return output, nil
 }
 
 func (c *CommandClient) ChannelCreate(ctx context.Context, endpoint string, app string, opts ...ChannelCreateOpts) (Channel, error) {
@@ -161,13 +182,19 @@ func (c *CommandClient) ChannelCreate(ctx context.Context, endpoint string, app 
 
 	var output Channel
 	err = json.Unmarshal(result, &output)
-	return output, err
+	if err != nil {
+		return output, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+	return output, nil
 }
 
 func (c *CommandClient) ChannelMove(ctx context.Context, channelId string, app string) error {
 	path, err := url.JoinPath("channels", channelId, "move")
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform channel operation: %w", err)
+	}
+	return nil
 	}
 	params := url.Values{}
 	params.Set("app", app)
@@ -175,7 +202,10 @@ func (c *CommandClient) ChannelMove(ctx context.Context, channelId string, app s
 	path = path + "?" + params.Encode()
 
 	_, err = c.httpPost(ctx, path, nil)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform channel operation: %w", err)
+	}
+	return nil
 }
 
 func (c *CommandClient) ChannelGet(ctx context.Context, channelId string) (Channel, error) {
@@ -191,14 +221,20 @@ func (c *CommandClient) ChannelGet(ctx context.Context, channelId string) (Chann
 
 	var output Channel
 	err = json.Unmarshal(result, &output)
-	return output, err
+	if err != nil {
+		return output, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+	return output, nil
 }
 
 func (c *CommandClient) ChannelHangup(ctx context.Context, channelId string, reason string) error {
 
 	path, err := url.JoinPath("/channels", channelId)
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform channel operation: %w", err)
+	}
+	return nil
 	}
 
 	if reason == "" {
@@ -232,7 +268,10 @@ func (c *CommandClient) ChannelHangup(ctx context.Context, channelId string, rea
 	path = path + "?" + params.Encode()
 
 	_, err = c.httpDelete(ctx, path)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform channel operation: %w", err)
+	}
+	return nil
 
 }
 
@@ -264,28 +303,43 @@ func (c *CommandClient) ChannelRecord(ctx context.Context, channelId string, fil
 
 	var output LiveRecording
 	err = json.Unmarshal(b, &output)
-	return output, err
+	if err != nil {
+		return output, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+	return output, nil
 
 }
 func (c *CommandClient) ChannelRing(ctx context.Context, channelId string) error {
 	path, err := url.JoinPath("/channels", channelId, "ring")
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform channel operation: %w", err)
+	}
+	return nil
 	}
 
 	_, err = c.httpPost(ctx, path, nil)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform channel operation: %w", err)
+	}
+	return nil
 
 }
 
 func (c *CommandClient) ChannelRingStop(ctx context.Context, channelId string) error {
 	path, err := url.JoinPath("/channels", channelId, "ring")
 	if err != nil {
-		return err
+		if err != nil {
+		return fmt.Errorf("failed to perform channel operation: %w", err)
+	}
+	return nil
 	}
 
 	_, err = c.httpDelete(ctx, path)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to perform channel operation: %w", err)
+	}
+	return nil
 
 }
 
@@ -302,7 +356,10 @@ func (c *CommandClient) channelPlay(ctx context.Context, pathBase, media string)
 
 	var output Playback
 	err = json.Unmarshal(res, &output)
-	return output, err
+	if err != nil {
+		return output, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+	return output, nil
 }
 
 func (c *CommandClient) ChannelPlay(ctx context.Context, channelId string, media string) (Playback, error) {
